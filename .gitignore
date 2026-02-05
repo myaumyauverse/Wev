@@ -1,1 +1,5 @@
 /target
+.wev/
+demo/
+*.log
+test.txt
