@@ -2,8 +2,8 @@ use clap::{Parser, Subcommand};
 use anyhow::Result;
 
 #[derive(Parser)]
-#[command(name = "statemesh")]
-#[command(about = "State-based file evolution tracker", long_about = None)]
+#[command(name = "wev")]
+#[command(about = "Write Event Versioning")]
 pub struct Cli {
     #[command(subcommand)]
     pub command: Commands,
@@ -11,12 +11,12 @@ pub struct Cli {
 
 #[derive(Subcommand)]
 pub enum Commands {
-    /// Initialize StateMesh in a folder
+    /// Initialize Wev in a folder
     Init {
         path: String,
     },
 
-    /// Watch a folder for changes
+    /// Watch a folder for file changes
     Watch {
         path: String,
     },
@@ -28,13 +28,7 @@ pub fn parse() -> Commands {
 
 pub fn dispatch(command: Commands) -> Result<()> {
     match command {
-        Commands::Init { path } => {
-            println!("Initializing StateMesh in {}", path);
-            Ok(())
-        }
-        Commands::Watch { path } => {
-            println!("Watching folder {}", path);
-            Ok(())
-        }
+        Commands::Init { path } => crate::init::init_workspace(&path),
+        Commands::Watch { path } => crate::watcher::watch_folder(&path),
     }
 }
