@@ -20,6 +20,9 @@ pub enum Commands {
     Watch {
         path: String,
     },
+
+    /// Show StateMesh event history
+    Log,
 }
 
 pub fn parse() -> Commands {
@@ -28,7 +31,18 @@ pub fn parse() -> Commands {
 
 pub fn dispatch(command: Commands) -> Result<()> {
     match command {
-        Commands::Init { path } => crate::init::init_workspace(&path),
-        Commands::Watch { path } => crate::watcher::watch_folder(&path),
+        Commands::Init { path } => {
+            crate::init::init_workspace(&path)?;
+        }
+
+        Commands::Watch { path } => {
+            crate::watcher::watch_folder(&path)?;
+        }
+
+        Commands::Log => {
+            crate::log::print_log()?;
+        }
     }
+
+    Ok(())
 }
