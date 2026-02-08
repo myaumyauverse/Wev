@@ -10,11 +10,11 @@ use std::sync::{mpsc::channel, Mutex};
 lazy_static::lazy_static! {
     // Track last known file sizes
     static ref FILE_SIZES: Mutex<HashMap<PathBuf, u64>> = Mutex::new(HashMap::new());
-    // Track files that were just created to suppress first write
+    // Track files just created to suppress first write noise
     static ref JUST_CREATED: Mutex<HashMap<PathBuf, bool>> = Mutex::new(HashMap::new());
 }
 
-/// Watch a folder but always log to workspace `.wev/`
+/// Watch a folder and log semantic file events
 pub fn watch_folder(watch_path: &str) -> Result<()> {
     let (tx, rx) = channel();
 
@@ -25,7 +25,7 @@ pub fn watch_folder(watch_path: &str) -> Result<()> {
     println!("{:<8} {:<10} {}", "TIME", "EVENT", "FILE");
     println!("--------------------------------");
 
-    // Workspace root = current directory (where `.wev` lives)
+    // Workspace root (where .wev lives)
     let workspace = std::env::current_dir()?;
 
     loop {
@@ -56,10 +56,10 @@ fn handle_event(workspace: &PathBuf, event: Event) -> Result<()> {
             continue;
         }
 
-        // Clean, UX-friendly CLI output
+        // UX-friendly CLI output
         println!("{:<8} {:<10} {}", time, event_type.to_uppercase(), file);
 
-        // Structured log for future StateMesh / sync
+        // Append-only event log (StateMesh will read this later)
         log_event(workspace, &time, &event_type, &file)?;
     }
 
@@ -92,7 +92,7 @@ fn classify_event(kind: &EventKind, path: &Path) -> &'static str {
 
             sizes.insert(path.to_path_buf(), new);
 
-            // Ignore the first write right after create
+            // Ignore first write after create
             if created.remove(path).is_some() {
                 "ignore"
             } else if new > old {
