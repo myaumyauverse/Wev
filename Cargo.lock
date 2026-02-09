@@ -3,19 +3,6 @@
 version = 4
 
 [[package]]
-name = "Wev"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "chrono",
- "clap",
- "lazy_static",
- "notify",
- "serde",
- "serde_json",
-]
-
-[[package]]
 name = "android_system_properties"
 version = "0.1.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -584,6 +571,19 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1f01b580c9ac74c8d8f0c0e4afb04eeef2acf145458e52c03845ee9cd23e3d12"
 dependencies = [
  "unicode-ident",
+]
+
+[[package]]
+name = "wev"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "chrono",
+ "clap",
+ "lazy_static",
+ "notify",
+ "serde",
+ "serde_json",
 ]
 
 [[package]]
