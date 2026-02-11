@@ -2,42 +2,44 @@ use anyhow::Result;
 use chrono::Local;
 use notify::{Event, EventKind, RecommendedWatcher, RecursiveMode, Watcher};
 use std::collections::HashMap;
-use std::fs::{metadata, OpenOptions};
-use std::io::Write;
+use std::fs::metadata;
 use std::path::{Path, PathBuf};
 use std::sync::{mpsc::channel, Mutex};
 
+use crate::state;
+
 lazy_static::lazy_static! {
     // Track last known file sizes
-    static ref FILE_SIZES: Mutex<HashMap<PathBuf, u64>> = Mutex::new(HashMap::new());
+    static ref FILE_SIZES: Mutex<HashMap<PathBuf, u64>> =
+        Mutex::new(HashMap::new());
+
     // Track files just created to suppress first write noise
-    static ref JUST_CREATED: Mutex<HashMap<PathBuf, bool>> = Mutex::new(HashMap::new());
+    static ref JUST_CREATED: Mutex<HashMap<PathBuf, bool>> =
+        Mutex::new(HashMap::new());
 }
 
-/// Watch a folder and log semantic file events
+/// Watch a folder and record semantic file events into StateMesh
 pub fn watch_folder(watch_path: &str) -> Result<()> {
     let (tx, rx) = channel();
 
-    let mut watcher = RecommendedWatcher::new(tx, notify::Config::default())?;
+    let mut watcher =
+        RecommendedWatcher::new(tx, notify::Config::default())?;
     watcher.watch(Path::new(watch_path), RecursiveMode::Recursive)?;
 
     println!("Watching folder: {}\n", watch_path);
     println!("{:<8} {:<10} {}", "TIME", "EVENT", "FILE");
     println!("--------------------------------");
 
-    // Workspace root (where .wev lives)
-    let workspace = std::env::current_dir()?;
-
     loop {
         match rx.recv() {
-            Ok(Ok(event)) => handle_event(&workspace, event)?,
+            Ok(Ok(event)) => handle_event(event)?,
             Ok(Err(e)) => eprintln!("watch error: {:?}", e),
             Err(e) => eprintln!("channel error: {:?}", e),
         }
     }
 }
 
-fn handle_event(workspace: &PathBuf, event: Event) -> Result<()> {
+fn handle_event(event: Event) -> Result<()> {
     let time = Local::now().format("%H:%M:%S").to_string();
 
     for path in event.paths {
@@ -52,15 +54,16 @@ fn handle_event(workspace: &PathBuf, event: Event) -> Result<()> {
             .to_string();
 
         let event_type = classify_event(&event.kind, &path);
+
         if event_type == "ignore" {
             continue;
         }
 
-        // UX-friendly CLI output
+        // CLI Output
         println!("{:<8} {:<10} {}", time, event_type.to_uppercase(), file);
 
-        // Append-only event log (StateMesh will read this later)
-        log_event(workspace, &time, &event_type, &file)?;
+        // 🔥 Record directly into StateMesh
+        state::record_event(&time, event_type, &file)?;
     }
 
     Ok(())
@@ -110,21 +113,4 @@ fn classify_event(kind: &EventKind, path: &Path) -> &'static str {
 
         _ => "ignore",
     }
-}
-
-fn log_event(workspace: &PathBuf, time: &str, event: &str, file: &str) -> Result<()> {
-    let log_path = workspace.join(".wev").join("events.log");
-
-    let mut log = OpenOptions::new()
-        .create(true)
-        .append(true)
-        .open(log_path)?;
-
-    let line = format!(
-        "{{\"time\":\"{}\",\"event\":\"{}\",\"file\":\"{}\"}}\n",
-        time, event, file
-    );
-
-    log.write_all(line.as_bytes())?;
-    Ok(())
 }
