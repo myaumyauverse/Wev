@@ -7,7 +7,7 @@
 **Event-driven version control for semantic file history**
 
 [![Rust](https://img.shields.io/badge/rust-stable-orange.svg)](https://www.rust-lang.org)
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+<!-- [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE) -->
 [![Status](https://img.shields.io/badge/status-experimental-yellow.svg)]()
 
 *Lightweight • Experimental • Built in Rust*
